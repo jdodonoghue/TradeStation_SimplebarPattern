@@ -1,0 +1,489 @@
+//jo_SimpleBarPattern
+// Created by: John O'Donoghue
+// Github: https://github.com/jdodonoghue/SimpleBarPattern.git
+
+input: 
+	Pattern( "" ),
+	bool debug( true );
+
+
+var: begindate(1220401), enddate(1220429), begintime(0000), endtime(2359); 
+
+var: topRange(0), bottomRange(0);
+
+vars: 
+	Instance( 0 ), 
+	Price( 0 ), 
+	LeftStrength( 0 ), 
+	RightStrength( 0 ), 
+	Length( 0 ),
+	oPivotPrice( 0 ), 
+	oPivotBar( 0 ),
+	double indOffset(5);
+
+	
+method void AnalysisTechnique_Initialized( elsystem.Object sender, elsystem.InitializedEventArgs args ) 
+begin
+	If BarNumber = 1 then  
+		CLEARPRINTLOG;
+end;
+
+method void SearchPattern()
+begin 
+	If debug Then
+	begin
+		If date >= begindate and date <= enddate then
+		begin
+			If time > begintime and time < endtime then
+			Begin
+				OneBarCandleReversal("short");
+				OneBarCandleReversal("long");
+				//TwoBarCandleReversal("long");
+				//ThreeBarCandleReversal("long");
+				//FourBarCandleReversal("short");
+			End;
+		end;
+	End else
+	Begin
+		OneBarCandleReversal("long");
+		OneBarCandleReversal("short");
+		TwoBarCandleReversal("long");
+		TwoBarCandleReversal("short");
+		ThreeBarCandleReversal("long");
+		ThreeBarCandleReversal("short");
+		FourBarCandleReversal("long");
+		FourBarCandleReversal("short");
+	end;
+		
+end;
+
+
+// direction=long/short
+method void OneBarCandleReversal(string direction)
+var: double hlRange, double prctLong, double prctShort;
+Begin
+	
+	hlRange = high - low;
+	prctLong = .75;
+	prctShort = .25;
+	
+	if direction = "long" Then
+	Begin
+		if close > (hlRange * prctLong) + low and open > (hlRange * prctLong) + low Then
+ 		Begin
+	  		Plot1( Low - indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+	if direction = "short" Then
+	Begin
+ 		if close < (hlRange * prctShort) + low and open < (hlRange * prctShort) + low Then
+ 		Begin
+	  		Plot1( High + indOffset, !( "Range" ), Yellow ) ;
+		end;
+	end;
+end;
+
+// direction=long/short
+method void TwoBarCandleReversal(string direction)
+var: double highestHigh, double lowestLow, double hlRange, double bodyRange, double prctLong, double prctShort;
+Begin
+	
+	prctLong = .75;
+	prctShort = .25;
+	
+	highestHigh = Highest(high, 2);
+	//print(highestHigh);
+	lowestLow = Lowest(low, 2);
+	
+	hlRange = highestHigh - lowestLow;
+	//print(lowestLow);
+	
+	//print("date: ", Date, " time: ", Time, " highestHigh: ", highestHigh, " lowestLow: ", lowestLow);
+		
+	if direction = "long" Then
+	Begin
+		if close[0] > (hlRange * prctLong) + lowestLow and open[1] > (hlRange * prctLong) + lowestLow then
+		Begin
+	  		Plot1( low - indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+	if direction = "short" Then
+	Begin
+		if close[0] < (hlRange * prctShort) + lowestLow and open[1] < (hlRange * prctShort) + lowestLow then
+		Begin
+	  		Plot1( high + indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+	
+end;
+
+// direction=long/short
+method void ThreeBarCandleReversal(string direction)
+var: double highestHigh, double lowestLow, double hlRange, double bodyRange, double prctLong, double prctShort;
+Begin
+	
+	prctLong = .75;
+	prctShort = .25;
+	
+	highestHigh = Highest(high, 3);
+	lowestLow = Lowest(low, 3);
+	
+	hlRange = highestHigh - lowestLow;
+
+	if direction = "long" Then
+	Begin
+		if close[0] > (hlRange * prctLong) + lowestLow and open[2] > (hlRange * prctLong) + lowestLow then
+		Begin
+	  		Plot1( low - indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+	if direction = "short" Then
+	Begin
+		if close[0] < (hlRange * prctShort) + lowestLow and open[2] < (hlRange * prctShort) + lowestLow then
+		Begin
+	  		Plot1( high + indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+
+end;
+
+
+// direction=long/short
+method void FourBarCandleReversal(string direction)
+var: double highestHigh, double lowestLow, double hlRange, double bodyRange, double prctLong, double prctShort;
+Begin
+	
+	prctLong = .75;
+	prctShort = .25;
+	
+	highestHigh = Highest(high, 4);
+	lowestLow = Lowest(low, 4);
+	
+	hlRange = highestHigh - lowestLow;
+
+	if direction = "long" Then
+	Begin
+		if close[0] > (hlRange * prctLong) + lowestLow and open[3] > (hlRange * prctLong) + lowestLow then
+		Begin
+	  		Plot1( low - indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+	if direction = "short" Then
+	Begin
+		if close[0] < (hlRange * prctShort) + lowestLow and open[3] < (hlRange * prctShort) + lowestLow then
+		Begin
+	  		Plot1( high + indOffset, !( "Range" ), White ) ;
+		end;
+	end;
+
+end;
+
+{
+// 4 bar pivot lower low entry
+method void FourBarPivotInsideReversal(string direction)
+var: int leftStrength, int rightStrength, int length, double highprice;
+begin 
+	//print(pivotLenght);
+	leftStrength = 1;
+	rightStrength = 1;
+	length = 5;
+	Value1 = PivotHighVSBar(1, high, leftStrength, rightStrength, length);
+	if Value1 <> -1 then 
+	Begin
+		highprice = high[Value1];
+	end;
+	
+	if high[0] > high[1] and high[0] < highprice then
+	Begin
+		Plot1( High, !( "Range" ), White ) ;
+	end;
+end;
+
+
+method void PreviousPivot(string direction)
+Begin
+	if direction = "long" Then
+	Begin
+		Value1 = Pivot( Close, 20, 1, 1, 1, 1, oPivotPrice, oPivotBar ) ;
+ 		
+
+	end;
+	if direction = "short" Then
+	Begin
+		
+		//Value1 = Pivot( Close, 20, 1, 1, 1, 1, oPivotPrice, oPivotBar ) ;
+		Value1 = PivotHighVSBar( 1, high, 1, 1, 20 ); 
+		if Value1 <> -1 then
+		Begin
+			print("Time: ", Time, " high: " , high );
+			print(Value1);	
+			//print(oPivotBar);
+		End;
+		 
+			
+		//Begin
+	  	//	Plot1( High, !( "Range" ), White ) ;
+		//end;
+	end;
+
+end;
+
+
+
+method void FourBarPivotOutsideReversal(string direction)
+var: int leftStrength, int rightStrength, int length, double highprice, double lowprice;
+Begin
+	leftStrength = 1;
+	rightStrength = 1;
+	length = 5;
+	if direction = "long" Then
+	Begin
+		Value1 = PivotLowVSBar(1, low, leftStrength, rightStrength, length);
+		if Value1 <> -1 then 
+	    Begin
+		  lowprice = low[Value1];
+	    end;
+	    if low[0] < low[1] and low[0] < lowprice then
+	    Begin
+		  Plot1( High, !( "Range" ), White ) ;
+	    end;
+	End
+	Else
+	Begin
+	  Value1 = PivotHighVSBar(1, high, leftStrength, rightStrength, length);
+	  //print(Value1);
+	  if Value1 <> -1 then 
+	  Begin
+		highprice = high[Value1];
+		//print(highprice);
+		//if high[0] > high[1] and high[0] > highprice and low[0] > low[1] and (high[0] - highprice) < 5 then
+		if high[0] > high[1] and high[0] > highprice and (high[0] - highprice) < 5 then
+		Begin
+		  Plot1( High, !( "Range" ), White ) ;
+	  	end;
+	  end;
+    end;
+end;
+}
+
+SearchPattern();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+// jo bottom entry pattern (to be renamed later)
+If date = begindate then
+begin
+	If time > begintime and time < endtime then
+	Begin
+		if low[0] < low[1] and low[0] < low[5] then //and high > Highest(high, 4)[1] Then
+		Begin
+			Plot1( High, !( "Range" ), White ) ;
+		end;
+	end;
+end;
+}{
+ 
+// jo top entry pattern (to be renamed later)
+If date >= begindate and date <= enddate then
+begin
+	If time > begintime and time < endtime then
+	Begin
+		//if high[0] > high[1] and high[2] < high[3] and high[3] > high[4] and (high[4] - high[0]) < 5 then //and high > Highest(high, 4)[1] Then
+		if high[0] > high[1] and low[1] < low[2] and high[2] > high[3] and (high[3] - high[0]) < 5 then //and high > Highest(high, 4)[1] Then
+		//if high[0] > high[1] then //and high > Highest(high, 4)[1] Then
+		Begin
+			Plot1( High, !( "Range" ), White ) ;
+		end;
+	end;
+end;
+}
+
+
+
+{
+If date = begindate then
+begin
+	If time > begintime and time < endtime then
+	Begin
+		//print(lowest(low, 5)[1]);
+		if low < low[2] and low[2] < low[3] and high[1] > high[2] then //and high > Highest(high, 4)[1] Then
+		Begin
+			Plot1( High, !( "Range" ), White ) ;
+		end;
+	end;
+end;
+}
+{
+If date = begindate then
+begin
+	If time > begintime and time < endtime then
+	Begin
+		//print(lowest(low, 5)[1]);
+		//if high[0] > high[3] and high[0] > high[1] and low[0] > low[1] then //and high[1] > high[2] then //and high > Highest(high, 4)[1] Then
+		//Begin
+		//	Plot1( High, !( "Range" ), White ) ;
+		//end;
+	end;
+	If time > begintime and time < endtime then
+	Begin
+		//print(lowest(low, 5)[1]);
+		if high[0] > high[3] and high[0] > high[1] and high[3] > high[4] and low[0] > low[1] then //and high[1] > high[2] then //and high > Highest(high, 4)[1] Then
+		Begin
+			Plot1( High, !( "Range" ), White ) ;
+		end;
+	end;
+end;
+}
+
+{
+// Closing Price Reverasal
+	if low < low[1] and close > close[1] and high < high[1] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+	
+	if high > high[1] and close < close[1] and low > low[1] then 
+	begin
+		Plot1( Low, !( "Range" ), Green ) ;
+	end ;
+}
+
+{
+// Inside Day
+	if high < high[1] and low > low[1] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+}
+
+{
+// Outside Day
+	if high > high[1] and low < low[1] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+}
+
+{
+// Three Day Reverasal
+	if high[0] > high[1] and high[0] > high[2] and high[1] < high[2] and low[1] < low[2] then
+	begin
+		If close > topRange then
+		begin
+			Plot1( High, !( "3 Day Reversal" ), Red ) ;
+		end;
+	end;
+	
+	if low[0] < low[1] and low[0] < low[2] and low[1] > low[2] and high[1] > high[2] then
+	begin
+		if close < bottomRange then
+		begin
+			Plot1( Low, !( "3 Day Reversal" ), Green ) ;
+		end;
+	end;
+}	
+
+{
+// Two Day Range Expansion
+    var: range0(0), range1(0);
+    range0 = high[0] - low[0];
+    range1 = high[1] - low[1];
+    
+	if close > open and range0 > range1 * 2 then
+	begin
+		Plot1( High, !( "Two Day Range Expansion" ), Green ) ;
+	end;
+	if close < open and range0 > range1 * 2 then
+	begin
+		Plot1( Low, !( "Two Day Range Expansion" ), White ) ;
+	end;
+}
+
+{
+// All Three Days > 50%
+	if close[0] > (low[0] + (high[0] - low[0])/2) and  close[1] > (low[1] + (high[1] - low[1])/2) and  close[2] > (low[2] + (high[2] - low[2])/2) then
+	begin
+		Plot1( High, !( "All Three Days > 50%" ), Green ) ;
+	end;
+	if close[0] < (low[0] + (high[0] - low[0])/2) and  close[1] < (low[1] + (high[1] - low[1])/2) and  close[2] < (low[2] + (high[2] - low[2])/2) then
+	begin
+		Plot1( Low, !( "All Three Days > 50%" ), White ) ;
+	end;
+}	
+{
+//
+if Close > topRange then 
+	begin
+	Plot1( High, !( "Range" ), Green ) ;
+	end ;
+
+if Close < bottomRange then 
+	begin
+	Plot1( Low, !( "Range" ), Red ) ;
+	end ;
+}
+
+
+
+
+	
+
+{	
+// Key Reverasal	
+	if low < low[1] and close > close[1] and high > high[1] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+	
+	if high > high[1] and close < close[1] and low < low[1] then 
+	begin
+		Plot1( High, !( "Range" ), Red ) ;
+	end ;
+}
+
+{	
+// High Low Reversal
+	if low < low[1] and close > close[1] and high > high[1] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+	
+	if high > high[1] and close < close[1] and low < low[1] then 
+	begin
+		Plot1( High, !( "Range" ), Red ) ;
+	end ;
+}
+
+{	
+// Accumulation
+	if low > low[1] and low[1] > low[2] and low[2] > low[3] and high > high[1] and high[1] > high[2] and high[2] > high[3] then 
+	begin
+		Plot1( High, !( "Range" ), Green ) ;
+	end ;
+	
+// Distribution
+	if low < low[1] and low[1] < low[2] and low[2] < low[3] and high < high[1] and high[1] < high[2] and high[2] < high[3] then 
+	begin
+		Plot1( High, !( "Range" ), Red ) ;
+	end ;
+}	
